@@ -1,0 +1,75 @@
+{
+  "name": "symlink-workspace",
+  "version": "0.0.1",
+  "description": "create symlinks in lerna/yarn workspaces for publish setups requiring both esm and cjs builds",
+  "author": "Dan Lynch <pyramation@gmail.com>",
+  "homepage": "https://github.com/cosmology-tech/symlink-workspace#readme",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "main/index.js",
+  "directories": {
+    "lib": "src",
+    "test": "__tests__"
+  },
+  "files": [
+    "src",
+    "main"
+  ],
+  "scripts": {
+    "build": "yarn tsc -p tsconfig.json --outDir main --module commonjs",
+    "clean": "rimraf ./main",
+    "prepare": "npm run clean && npm run build",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:debug": "node --inspect node_modules/.bin/jest --runInBand"
+  },
+  "bin": {
+    "symlink-workspace": "main/cli.js"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/"
+    ],
+    "testPathIgnorePatterns": [
+      "main/"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cosmology-tech/symlink-workspace"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/cosmology-tech/symlink-workspace/issues"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "eslint": "8.38.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "esprima": "4.0.1",
+    "jest": "^29.5.0",
+    "jest-in-case": "1.0.2",
+    "prettier": "^2.8.7",
+    "rimraf": "5.0.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "10.9.2",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "chalk": "4.1.2",
+    "glob": "8.1.0",
+    "minimist": "^1.2.8",
+    "mkdirp": "3.0.0",
+    "rimraf": "5.0.0"
+  }
+}
