@@ -22,7 +22,9 @@ interface PackageInfo {
   devDependencies: string[];
 }
 
-export const readLernaProject = (rootDir: string) => {
+export const readLernaProject = (
+  rootDir: string
+) => {
 
   // Step 1: Read the lerna.json file for all workspaces
   const lernaConfigPath = path.join(rootDir, 'lerna.json');

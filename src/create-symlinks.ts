@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { mkdirpSync as mkdirp } from 'mkdirp';
 import * as path from 'path';
 import { sync as rimraf } from 'rimraf';
+import { LogLevel } from './log';
 
 interface PackageInfo {
   name: string;
@@ -13,33 +14,37 @@ interface PackageInfo {
   devDependencies: string[];
 }
 
-export function processPackages(packageInfos: PackageInfo[], rootDir: string) {
-  console.log(chalk.blue(`Starting to process ${packageInfos.length} packages...`));
+export function processPackages(
+  packageInfos: PackageInfo[],
+  rootDir: string,
+  log: (str: string, level: LogLevel) => void
+) {
+  log(chalk.blue(`Starting to process ${packageInfos.length} packages...`), 'info');
 
   packageInfos.forEach(packageInfo => {
     const packageName = chalk.green(packageInfo.name);
-    console.log(chalk.blue(`Processing package: ${packageName}`));
+    log(chalk.blue(`Processing package: ${packageName}`), 'info');
 
     const targetNodeModulesPath = path.join(packageInfo.path, 'node_modules', packageInfo.name);
     const distPath = path.join(packageInfo.path, 'dist');
 
-    console.log(chalk.yellow(`Checking if target node_modules path exists: ${targetNodeModulesPath}`));
+    log(chalk.yellow(`Checking if target node_modules path exists: ${targetNodeModulesPath}`), 'debug');
     if (fs.existsSync(targetNodeModulesPath)) {
-      console.log(chalk.red(`Removing existing node_modules directory: ${targetNodeModulesPath}`));
+      log(chalk.red(`Removing existing node_modules directory: ${targetNodeModulesPath}`), 'info');
       rimraf(targetNodeModulesPath);
     }
 
-    console.log(chalk.yellow(`Ensuring directory exists for symlink: ${path.dirname(targetNodeModulesPath)}`));
+    log(chalk.yellow(`Ensuring directory exists for symlink: ${path.dirname(targetNodeModulesPath)}`), 'info');
     mkdirp(path.dirname(targetNodeModulesPath));
 
-    console.log(chalk.yellow(`Creating symlink from ${distPath} to ${targetNodeModulesPath}`));
+    log(chalk.yellow(`Creating symlink from ${distPath} to ${targetNodeModulesPath}`), 'info');
     fs.symlinkSync(distPath, targetNodeModulesPath, 'junction');
 
-    console.log(chalk.green(`Finished processing ${packageName}`));
+    log(chalk.green(`Finished processing ${packageName}`), 'info');
   });
 
   const rootNodeModulesPath = path.join(rootDir, 'node_modules');
-  console.log(chalk.blue(`Processing root node_modules at ${rootNodeModulesPath}`));
+  log(chalk.blue(`Processing root node_modules at ${rootNodeModulesPath}`), 'debug');
 
   packageInfos.forEach(packageInfo => {
     const packageName = chalk.green(packageInfo.name);
@@ -47,15 +52,15 @@ export function processPackages(packageInfos: PackageInfo[], rootDir: string) {
 
     // Check and remove the existing symlink if it exists
     if (fs.existsSync(symlinkPath)) {
-      console.log(chalk.red(`Removing existing symlink for ${packageName} at root`));
+      log(chalk.red(`Removing existing symlink for ${packageName} at root`), 'info');
       rimraf(symlinkPath);
     }
 
     const distPath = path.join(packageInfo.path, 'dist');
-    console.log(chalk.yellow(`Creating symlink in root for ${packageName}`));
+    log(chalk.yellow(`Creating symlink in root for ${packageName}`));
     mkdirp(path.dirname(symlinkPath));
     fs.symlinkSync(distPath, symlinkPath, 'junction');
   });
 
-  console.log(chalk.blue('All packages processed successfully including root node_modules.'));
+  log(chalk.blue('All packages processed successfully including root node_modules.'));
 }
