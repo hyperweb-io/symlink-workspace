@@ -57,10 +57,10 @@ export function processPackages(
     }
 
     const distPath = path.join(packageInfo.path, 'dist');
-    log(chalk.yellow(`Creating symlink in root for ${packageName}`));
+    log(chalk.yellow(`Creating symlink in root for ${packageName}`), 'info');
     mkdirp(path.dirname(symlinkPath));
     fs.symlinkSync(distPath, symlinkPath, 'junction');
   });
 
-  log(chalk.blue('All packages processed successfully including root node_modules.'));
+  log(chalk.blue('All packages processed successfully including root node_modules.'), 'debug');
 }
