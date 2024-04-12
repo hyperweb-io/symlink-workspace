@@ -14,7 +14,7 @@ if (argv._ && argv._[0]) {
 }
 
 // Logging function based on logLevel
-const currentLogLevel = argv.logLevel ? logLevels.indexOf(argv.logLevel.toLowerCase()) : 2; // Default to 'info'
+const currentLogLevel = argv.logLevel ? logLevels.indexOf(argv.logLevel.toLowerCase()) : 0; // Default to 'error'
 const log = getLogFn(currentLogLevel);
 try {
   const lernaJsonPath: string = findLernaDir(dir);
