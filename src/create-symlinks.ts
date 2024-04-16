@@ -14,6 +14,25 @@ interface PackageInfo {
   devDependencies: string[];
 }
 
+function fileOrFolderOrLinkExists(path) {
+  try {
+    const stats = fs.lstatSync(path);
+    if (stats.isDirectory()) {
+      return 'directory';
+    } else if (stats.isFile()) {
+      return 'file';
+    } else if (stats.isSymbolicLink()) {
+      return 'symlink';
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return false;
+    }
+    throw error; // Re-throw other errors that might occur
+  }
+  return true;
+}
+
 export function processPackages(
   packageInfos: PackageInfo[],
   rootDir: string,
@@ -29,7 +48,7 @@ export function processPackages(
     const distPath = path.join(packageInfo.path, 'dist');
 
     log(chalk.yellow(`Checking if target node_modules path exists: ${targetNodeModulesPath}`), 'debug');
-    if (fs.existsSync(targetNodeModulesPath)) {
+    if (fileOrFolderOrLinkExists(targetNodeModulesPath)) {
       log(chalk.red(`Removing existing node_modules directory: ${targetNodeModulesPath}`), 'info');
       rimraf(targetNodeModulesPath);
     }
@@ -51,7 +70,7 @@ export function processPackages(
     const symlinkPath = path.join(rootNodeModulesPath, packageInfo.name);
 
     // Check and remove the existing symlink if it exists
-    if (fs.existsSync(symlinkPath)) {
+    if (fileOrFolderOrLinkExists(symlinkPath)) {
       log(chalk.red(`Removing existing symlink for ${packageName} at root`), 'info');
       rimraf(symlinkPath);
     }
