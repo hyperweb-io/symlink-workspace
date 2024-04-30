@@ -42,24 +42,25 @@ export function processPackages(
 
   packageInfos.forEach(packageInfo => {
     const packageName = chalk.green(packageInfo.name);
-    log(chalk.blue(`Processing package: ${packageName}`), 'info');
+    log(`[${chalk.blue(packageName)}]: ${chalk.blue(`Processing package`)}`, 'info');
 
-    const targetNodeModulesPath = path.join(packageInfo.path, 'node_modules', packageInfo.name);
-    const distPath = path.join(packageInfo.path, 'dist');
+    // Link each dependency inside this package's node_modules
+    packageInfo.dependencies.forEach(dep => {
+      const depInfo = packageInfos.find(info => info.name === dep);
+      if (depInfo) {
+        const depDistPath = path.join(depInfo.path, 'dist');
+        const symlinkTarget = path.join(packageInfo.path, 'node_modules', depInfo.name);
 
-    log(chalk.yellow(`Checking if target node_modules path exists: ${targetNodeModulesPath}`), 'debug');
-    if (fileOrFolderOrLinkExists(targetNodeModulesPath)) {
-      log(chalk.red(`Removing existing node_modules directory: ${targetNodeModulesPath}`), 'info');
-      rimraf(targetNodeModulesPath);
-    }
-
-    log(chalk.yellow(`Ensuring directory exists for symlink: ${path.dirname(targetNodeModulesPath)}`), 'info');
-    mkdirp(path.dirname(targetNodeModulesPath));
-
-    log(chalk.yellow(`Creating symlink from ${distPath} to ${targetNodeModulesPath}`), 'info');
-    fs.symlinkSync(distPath, targetNodeModulesPath, 'junction');
-
-    log(chalk.green(`Finished processing ${packageName}`), 'info');
+        log(`[${chalk.blue(packageName)}]: Linking dependency ${chalk.green(dep)}`, 'info');
+        if (fileOrFolderOrLinkExists(symlinkTarget)) {
+          log(`[${chalk.blue(packageName)}]: ${chalk.grey(`Removing existing node_modules directory: ${symlinkTarget}`)}`, 'info');
+          rimraf(symlinkTarget);
+        }
+        mkdirp(path.dirname(symlinkTarget));
+        fs.symlinkSync(depDistPath, symlinkTarget, 'junction');
+      }
+    });
+    log(`[${chalk.blue(packageName)}]: ${chalk.green(`Finished processing ${packageName}`)}`, 'info');
   });
 
   const rootNodeModulesPath = path.join(rootDir, 'node_modules');
