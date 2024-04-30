@@ -47,7 +47,12 @@ function linkBinCommands(
     Object.keys(packageInfo.json.bin).forEach(binCommand => {
       const targetBinPath = path.join(packageInfo.path, 'dist', packageInfo.json.bin[binCommand]);
       const symlinkBinPath = path.join(packagePath, 'node_modules', '.bin', binCommand);
-      execSync(`chmod +x ${targetBinPath}`);
+
+      // if exists, chmod +x it!
+      if (fileOrFolderOrLinkExists(targetBinPath)) {
+        fs.chmodSync(targetBinPath, 0o755);
+      }
+
 
       if (fileOrFolderOrLinkExists(symlinkBinPath)) {
         rimraf(symlinkBinPath);  // Remove existing symlink if it exists
