@@ -1,6 +1,6 @@
 {
   "name": "symlink-workspace",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "create symlinks in lerna/yarn workspaces for publish setups requiring both esm and cjs builds",
   "author": "Dan Lynch <pyramation@gmail.com>",
   "homepage": "https://github.com/cosmology-tech/symlink-workspace#readme",
