@@ -4,11 +4,13 @@ import { mkdirpSync as mkdirp } from 'mkdirp';
 import * as path from 'path';
 import { sync as rimraf } from 'rimraf';
 import { LogLevel } from './log';
+import { execSync } from 'child_process';
 
 interface PackageInfo {
   name: string;
   folderName: string;
   path: string;
+  json: any;
   workspace: string;
   dependencies: string[];
   devDependencies: string[];
@@ -33,6 +35,50 @@ function fileOrFolderOrLinkExists(path) {
   return true;
 }
 
+function linkBinCommands(
+  packageInfo: PackageInfo,
+  packagePath: string,
+  packageName: string,
+  log: (str: string, level: LogLevel) => void
+) {
+
+  // START .bin
+  if (packageInfo.json.bin) {
+    Object.keys(packageInfo.json.bin).forEach(binCommand => {
+      const targetBinPath = path.join(packageInfo.path, 'dist', packageInfo.json.bin[binCommand]);
+      const symlinkBinPath = path.join(packagePath, 'node_modules', '.bin', binCommand);
+      execSync(`chmod +x ${targetBinPath}`);
+
+      if (fileOrFolderOrLinkExists(symlinkBinPath)) {
+        rimraf(symlinkBinPath);  // Remove existing symlink if it exists
+      }
+      mkdirp(path.dirname(symlinkBinPath));
+      fs.symlinkSync(targetBinPath, symlinkBinPath, 'file');  // Create a symbolic link
+      log(`[${chalk.magenta(packageName)}]: command ${chalk.green(binCommand)} link ${chalk.blue(symlinkBinPath)}`, 'info');
+      log(`[${chalk.magenta(packageName)}]: command ${chalk.green(binCommand)} target ${chalk.green(targetBinPath)}`, 'info');
+    });
+  }
+
+}
+
+function linkModule(
+  packageInfo: PackageInfo,
+  depInfo: PackageInfo,
+  log: (str: string, level: LogLevel) => void
+) {
+
+  const depDistPath = path.join(depInfo.path, 'dist');
+  const symlinkTarget = path.join(packageInfo.path, 'node_modules', depInfo.name);
+  log(`[${chalk.blue(packageInfo.name)}]: Linking dependency ${chalk.green(depInfo.name)}`, 'info');
+  if (fileOrFolderOrLinkExists(symlinkTarget)) {
+    rimraf(symlinkTarget);
+  }
+  mkdirp(path.dirname(symlinkTarget));
+  fs.symlinkSync(depDistPath, symlinkTarget, 'junction');
+
+
+}
+
 export function processPackages(
   packageInfos: PackageInfo[],
   rootDir: string,
@@ -48,16 +94,8 @@ export function processPackages(
     packageInfo.dependencies.forEach(dep => {
       const depInfo = packageInfos.find(info => info.name === dep);
       if (depInfo) {
-        const depDistPath = path.join(depInfo.path, 'dist');
-        const symlinkTarget = path.join(packageInfo.path, 'node_modules', depInfo.name);
-
-        log(`[${chalk.blue(packageName)}]: Linking dependency ${chalk.green(dep)}`, 'info');
-        if (fileOrFolderOrLinkExists(symlinkTarget)) {
-          log(`[${chalk.blue(packageName)}]: ${chalk.grey(`Removing existing node_modules directory: ${symlinkTarget}`)}`, 'info');
-          rimraf(symlinkTarget);
-        }
-        mkdirp(path.dirname(symlinkTarget));
-        fs.symlinkSync(depDistPath, symlinkTarget, 'junction');
+        linkBinCommands(depInfo, packageInfo.path, packageInfo.name, log);
+        linkModule(packageInfo, depInfo, log);
       }
     });
     log(`[${chalk.blue(packageName)}]: ${chalk.green(`Finished processing ${packageName}`)}`, 'info');
@@ -67,12 +105,17 @@ export function processPackages(
   log(chalk.blue(`Processing root node_modules at ${rootNodeModulesPath}`), 'debug');
 
   packageInfos.forEach(packageInfo => {
+
+    // START .bin
+    linkBinCommands(packageInfo, rootDir, '<root>', log);
+    // END .bin
+
+    // START MODULE
     const packageName = chalk.green(packageInfo.name);
     const symlinkPath = path.join(rootNodeModulesPath, packageInfo.name);
 
     // Check and remove the existing symlink if it exists
     if (fileOrFolderOrLinkExists(symlinkPath)) {
-      log(chalk.red(`Removing existing symlink for ${packageName} at root`), 'info');
       rimraf(symlinkPath);
     }
 
@@ -80,6 +123,7 @@ export function processPackages(
     log(chalk.yellow(`Creating symlink in root for ${packageName}`), 'info');
     mkdirp(path.dirname(symlinkPath));
     fs.symlinkSync(distPath, symlinkPath, 'junction');
+    // END MODULE
   });
 
   log(chalk.blue('All packages processed successfully including root node_modules.'), 'debug');

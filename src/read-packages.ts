@@ -17,6 +17,7 @@ interface PackageInfo {
   name: string;
   folderName: string;
   path: string;
+  json: any;
   workspace: string;
   dependencies: string[];
   devDependencies: string[];
@@ -45,6 +46,7 @@ export const readLernaProject = (
       // Push the package info to the packages array
       packages.push({
         name: packageName,
+        json: packageJson,
         folderName: folderName,
         path: fullPath,
         workspace: workspaceName,
