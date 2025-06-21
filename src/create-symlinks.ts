@@ -6,6 +6,8 @@ import { sync as rimraf } from 'rimraf';
 import { LogLevel } from './log';
 import { execSync } from 'child_process';
 
+const isWindows = process.platform === 'win32';
+
 interface PackageInfo {
   name: string;
   folderName: string;
@@ -58,7 +60,16 @@ function linkBinCommands(
         rimraf(symlinkBinPath);  // Remove existing symlink if it exists
       }
       mkdirp(path.dirname(symlinkBinPath));
-      fs.symlinkSync(targetBinPath, symlinkBinPath, 'file');  // Create a symbolic link
+      try {
+        fs.symlinkSync(targetBinPath, symlinkBinPath, isWindows ? 'junction' : 'file');
+      } catch (error: any) {
+        if (isWindows && error.code === 'EPERM') {
+          log(`[${chalk.magenta(packageName)}]: Windows requires admin privileges for symlinks. Using junction instead.`, 'warn');
+          fs.symlinkSync(targetBinPath, symlinkBinPath, 'junction');
+        } else {
+          throw error;
+        }
+      }
       log(`[${chalk.magenta(packageName)}]: command ${chalk.green(binCommand)} link ${chalk.blue(symlinkBinPath)}`, 'info');
       log(`[${chalk.magenta(packageName)}]: command ${chalk.green(binCommand)} target ${chalk.green(targetBinPath)}`, 'info');
     });
@@ -79,7 +90,16 @@ function linkModule(
     rimraf(symlinkTarget);
   }
   mkdirp(path.dirname(symlinkTarget));
-  fs.symlinkSync(depDistPath, symlinkTarget, 'junction');
+  try {
+    fs.symlinkSync(depDistPath, symlinkTarget, isWindows ? 'junction' : 'dir');
+  } catch (error: any) {
+    if (isWindows && error.code === 'EPERM') {
+      log(`[${chalk.blue(packageInfo.name)}]: Windows requires admin privileges for symlinks. Using junction.`, 'warn');
+      fs.symlinkSync(depDistPath, symlinkTarget, 'junction');
+    } else {
+      throw error;
+    }
+  }
 
 
 }
@@ -127,7 +147,16 @@ export function processPackages(
     const distPath = path.join(packageInfo.path, 'dist');
     log(chalk.yellow(`Creating symlink in root for ${packageName}`), 'info');
     mkdirp(path.dirname(symlinkPath));
-    fs.symlinkSync(distPath, symlinkPath, 'junction');
+    try {
+      fs.symlinkSync(distPath, symlinkPath, isWindows ? 'junction' : 'dir');
+    } catch (error: any) {
+      if (isWindows && error.code === 'EPERM') {
+        log(chalk.yellow(`Windows requires admin privileges for symlinks. Using junction for ${packageName}.`), 'warn');
+        fs.symlinkSync(distPath, symlinkPath, 'junction');
+      } else {
+        throw error;
+      }
+    }
     // END MODULE
   });
 

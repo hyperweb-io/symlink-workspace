@@ -1,9 +1,9 @@
 {
   "name": "symlink-workspace",
-  "version": "1.9.0",
+  "version": "1.11.0",
   "description": "create symlinks in lerna/yarn workspaces for publish setups requiring both esm and cjs builds",
   "author": "Dan Lynch <pyramation@gmail.com>",
-  "homepage": "https://github.com/cosmology-tech/symlink-workspace#readme",
+  "homepage": "https://github.com/hyperweb-io/symlink-workspace#readme",
   "license": "SEE LICENSE IN LICENSE",
   "main": "main/index.js",
   "directories": {
@@ -45,11 +45,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cosmology-tech/symlink-workspace"
+    "url": "https://github.com/hyperweb-io/symlink-workspace"
   },
   "keywords": [],
   "bugs": {
-    "url": "https://github.com/cosmology-tech/symlink-workspace/issues"
+    "url": "https://github.com/hyperweb-io/symlink-workspace/issues"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
